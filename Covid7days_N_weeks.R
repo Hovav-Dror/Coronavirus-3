@@ -34,32 +34,46 @@ Covid7days_N_weeks <- function(CovidGeo, n = 0, population2000 = population_by_s
     ungroup %>% 
     filter(!is.na(STAT08)) 
   
-
+  # temp %>% select(Population, Accumulated7) %>% 
+  #   mutate(Population = as.numeric(Population)) %>%  
+  #   filter(Population > 2000) %>% 
+  #   mutate(Accumulated8 = ifelse(is.na(Accumulated7), NA, Accumulated7 / Population * 10000)) %>% 
+  #   pull(Accumulated8) %>% 
+  #   quantile(na.rm = T)
+  
+  
   CovidGeo <- CovidGeo %>% select(-town) %>% 
     full_join(population2000 %>% rename(town = town_name)) %>% 
     mutate(
+      Accu7Scaled = Accumulated7 / as.numeric(Population) * 10000,
       G_accumulated = case_when(
         Under2000 ~ "Population Under 2000",
         Special == "<15" ~ "<15",
         Special == "First week above 15" ~ "First week above 15",
-        as.numeric(Accumulated7) == 0 ~ "0",
-        as.numeric(Accumulated7) <= 2 ~ "1-2",
-        as.numeric(Accumulated7) <= 9 ~ "3-9",
-        as.numeric(Accumulated7) <= 25 ~ "10-25",
-        as.numeric(Accumulated7) > 25 ~ ">25"
+        as.numeric(Accu7Scaled) == 0 ~ "0",
+        as.numeric(Accu7Scaled) <= 3 ~ "1-3",
+        as.numeric(Accu7Scaled) <= 12 ~ "4-12",
+        as.numeric(Accu7Scaled) <= 30 ~ "13-30",
+        as.numeric(Accu7Scaled) > 30 ~ ">30"
       ),
+      
       G_Color = case_when(
         G_accumulated == "Population Under 2000" ~ "grey",
         G_accumulated == "<15"                   ~ "white",
         G_accumulated == "First week above 15"   ~ "yellow",
         G_accumulated == "0"                     ~ "white",
-        G_accumulated == "1-2"                   ~ "yellow",
-        G_accumulated == "3-9"                   ~ "orange",
-        G_accumulated == "10-25"                 ~ "red",
-        G_accumulated == ">25"                  ~ "black",
+        G_accumulated == "1-3"                   ~ "yellow",
+        G_accumulated == "4-12"                   ~ "orange",
+        G_accumulated == "13-30"                 ~ "red",
+        G_accumulated == ">30"                  ~ "black",
       )
     ) %>% 
     mutate(
+      AccuScaleLabel = case_when(
+        Under2000 ~ "",
+        Special == "<15" ~ "",
+        Special == "First week above 15" ~ "",
+        TRUE ~ paste0("Cases per 10,0000: ", round(Accu7Scaled, 1))),
       Accumulated7 = case_when(
         Under2000 ~ "Population Under 2000<br/>MHO does not report cases",
         Special == "<15" ~ "Healthy Area<br/><15 cases accumulated<br/>since March 2020",
@@ -68,8 +82,8 @@ Covid7days_N_weeks <- function(CovidGeo, n = 0, population2000 = population_by_s
       )) %>% 
     mutate(
       Label7 = sprintf(
-        "New cases in the week<br/>ending %s: <strong>%s</strong><br/><br/>Town: %s Statistical area: %g<br/>Population: %s<br/>Neighborhoods: %s<br/>Streets: %s<br/>",
-        paste0(Month, " ", Day),  Accumulated7, town, STAT08, comma(parse_number(Population), accuracy = 1), Neighborhoods, Streets
+        "New cases in the week<br/>ending %s: <strong>%s</strong><br/>%s<br/><br/>Town: %s Statistical area: %g<br/>Population: %s<br/>Neighborhoods: %s<br/>Streets: %s<br/>",
+        paste0(Month, " ", Day),  Accumulated7, AccuScaleLabel, town, STAT08, comma(parse_number(Population), accuracy = 1), Neighborhoods, Streets
       ),
       GName = paste0("Week ending ", Month, " ", Day)
     ) %>% 

@@ -6,19 +6,7 @@ CovidAccumulated <- function(CovidGeo, population2000 = population_by_statistica
     select(town, town_code, STAT08, date, accumulated_cases) %>% 
     arrange(desc(date))
   
-  # LastDate <- CovidGeo %>% filter(!is.na(date)) %>% slice(1) %>% pull(date) - (n * 7)
-  # Month <- lubridate::month(LastDate, label = T, locale = "USA") %>% as.character()
-  # Day <- lubridate::day(LastDate) %>% as.character()
-  # LDay <- stringr::str_sub(Day,-1,-1) # last digit of the day
-  # Day <- case_when(
-  #   nchar(Day) == 2 & as.numeric(Day) < 21 ~ paste0(Day, "th"),
-  #   LDay == "1" ~ paste0(Day, "st"),
-  #   LDay == "2" ~ paste0(Day, "nd"),
-  #   LDay == "3" ~ paste0(Day, "rd"),
-  #   TRUE ~ paste0(Day, "th")
-  # )
-  
-  CovidGeo <- CovidGeo %>% 
+   CovidGeo <- CovidGeo %>% 
     #filter(date <= LastDate, date > LastDate - 7) %>% # keep only the relevant week
     group_by(town, town_code, STAT08) %>% 
     arrange(desc(date)) %>% 
@@ -33,33 +21,48 @@ CovidAccumulated <- function(CovidGeo, population2000 = population_by_statistica
     mutate(STAT08 = ifelse(is.na(STAT08) & n() == 1, 1, STAT08)) %>% 
     ungroup %>% 
     filter(!is.na(STAT08)) 
-  
+
+   # temp <- CovidGeo %>% select(-town) %>%
+   #   full_join(population2000 %>% rename(town = town_name))
+   #   temp %>% select(Population, Accumulated_all) %>%
+   #     mutate(Population = as.numeric(Population)) %>%
+   #     filter(Population > 2000) %>%
+   #     mutate(Accumulated8 = ifelse(is.na(Accumulated_all), NA, Accumulated_all / Population * 10000)) %>%
+   #     pull(Accumulated8) %>%
+   #     quantile(na.rm = T, probs = (0:20)/20)
+
   
   CovidGeo <- CovidGeo %>% select(-town) %>% 
     full_join(population2000 %>% rename(town = town_name)) %>% 
     mutate(
+      Accu7Scaled = Accumulated_all / as.numeric(Population) * 10000,
       G_accumulated = case_when(
         Under2000 ~ "Population Under 2000",
         Special == "<15" ~ "<15",
-        #Special == "First week above 15" ~ "First week above 15",
-        #as.numeric(Accumulated_all) == 0 ~ "0",
-        as.numeric(Accumulated_all) <= 25 ~ "15-25",
-        as.numeric(Accumulated_all) <= 50 ~ "26-50",
-        as.numeric(Accumulated_all) <= 80 ~ "51-80",
-        as.numeric(Accumulated_all) > 80 ~ ">80"
+        Special == "First week above 15" ~ "First week above 15",
+        as.numeric(Accu7Scaled) == 0 ~ "0",
+        as.numeric(Accu7Scaled) <= 65 ~ "1-65", # 25% at Aug30th
+        as.numeric(Accu7Scaled) <= 135 ~ "66-135", # 75% at Aug30th
+        as.numeric(Accu7Scaled) <= 370 ~ "136-370", # 95% at Aug30th
+        as.numeric(Accu7Scaled) > 370 ~ ">370"
       ),
       G_Color = case_when(
         G_accumulated == "Population Under 2000" ~ "grey",
         G_accumulated == "<15"                   ~ "white",
         #G_accumulated == "First week above 15"   ~ "yellow",
         #G_accumulated == "0"                     ~ "white",
-        G_accumulated == "15-25"                   ~ "yellow",
-        G_accumulated == "26-50"                   ~ "orange",
-        G_accumulated == "51-80"                 ~ "red",
-        G_accumulated == ">80"                  ~ "black",
+        G_accumulated == "1-65"                   ~ "yellow",
+        G_accumulated == "66-135"                   ~ "orange",
+        G_accumulated == "136-370"                 ~ "red",
+        G_accumulated == ">370"                  ~ "black",
       )
     ) %>% 
     mutate(
+      AccuScaleLabel = case_when(
+        Under2000 ~ "",
+        Special == "<15" ~ "",
+        Special == "First week above 15" ~ "",
+        TRUE ~ paste0("Cases per 10,0000: ", round(Accu7Scaled, 1))),
       Accumulated_all = case_when(
         Under2000 ~ "Population Under 2000<br/>MHO does not report cases",
         Special == "<15" ~ "Healthy Area<br/><15 cases accumulated<br/>since March 2020",
@@ -68,8 +71,8 @@ CovidAccumulated <- function(CovidGeo, population2000 = population_by_statistica
       )) %>% 
     mutate(
       Label7 = sprintf(
-        "Accumulated cases since March: <strong>%s</strong><br/><br/>Town: %s Statistical area: %g<br/>Population: %s<br/>Neighborhoods: %s<br/>Streets: %s<br/>",
-        Accumulated_all, town, STAT08, comma(parse_number(Population), accuracy = 1), Neighborhoods, Streets
+        "Accumulated cases since March: <strong>%s</strong><br/>%s<br/><br/>Town: %s Statistical area: %g<br/>Population: %s<br/>Neighborhoods: %s<br/>Streets: %s<br/>",
+        Accumulated_all, AccuScaleLabel, town, STAT08, comma(parse_number(Population), accuracy = 1), Neighborhoods, Streets
       ),
       GName = "Accumulated Cases"
     ) %>% 
