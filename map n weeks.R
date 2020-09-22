@@ -1,12 +1,15 @@
 library(HovavLoadPackage2)
 library(readxl)
 library(leaflet)
+
+
 source("Covid7days_N_weeks.R")
+source("CovidAccumulated.R")
 
 
 # Choose how many weeks ---------------------------------------------------
 
-Weeks <- 6
+Weeks <- 4
 
 
 # Load latest COVID data by area number -----------------------------------
@@ -42,7 +45,7 @@ if (!exists("StatisticalAreas") | !exists("population_by_statistical_area_")) {
 
 
 # Combine Weeks CovidGeos to a single tibble ------------------------------
-
+{
 CovidGeo <- Covid7days_N_weeks(CovidGeo = geographic_summary_per_day, n = 0, population2000 = population_by_statistical_area_)
 
 if (Weeks > 1) {
@@ -53,8 +56,11 @@ if (Weeks > 1) {
     )
   }
 }
-
-
+CovidGeo = left_join(
+  CovidGeo,
+  CovidAccumulated(CovidGeo = geographic_summary_per_day, population2000 = population_by_statistical_area_)
+)
+}
 
 # Add Geographical Polygons -----------------------------------------------
 
@@ -73,7 +79,7 @@ Map <- DBleaflet %>%
   addTiles() %>% 
   fitBounds(lng1 = 34.747, lat1 = 32.032, lng2 = 34.842, lat2 = 32.133) 
 
-Layers <- DBleaflet %>% select(contains("GName_")) %>% names()
+Layers <- DBleaflet %>% select(contains("GName")) %>% names()
 Layers <- Layers[1:(length(Layers) - 1)] %>% gsub(pattern = "GName_", replacement = "") #%>% gsub(pattern = "_", replacement = " ")
 Groups <- list()
 

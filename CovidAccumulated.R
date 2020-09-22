@@ -41,22 +41,22 @@ CovidAccumulated <- function(CovidGeo, population2000 = population_by_statistica
       G_accumulated = case_when(
         Under2000 ~ "Population Under 2000",
         Special == "<15" ~ "<15",
-        Special == "First week above 15" ~ "First week above 15",
-        as.numeric(Accumulated_all) == 0 ~ "0",
-        as.numeric(Accumulated_all) <= 2 ~ "1-2",
-        as.numeric(Accumulated_all) <= 9 ~ "3-9",
-        as.numeric(Accumulated_all) <= 25 ~ "10-25",
-        as.numeric(Accumulated_all) > 25 ~ ">25"
+        #Special == "First week above 15" ~ "First week above 15",
+        #as.numeric(Accumulated_all) == 0 ~ "0",
+        as.numeric(Accumulated_all) <= 25 ~ "15-25",
+        as.numeric(Accumulated_all) <= 50 ~ "26-50",
+        as.numeric(Accumulated_all) <= 80 ~ "51-80",
+        as.numeric(Accumulated_all) > 80 ~ ">80"
       ),
       G_Color = case_when(
         G_accumulated == "Population Under 2000" ~ "grey",
         G_accumulated == "<15"                   ~ "white",
-        G_accumulated == "First week above 15"   ~ "yellow",
-        G_accumulated == "0"                     ~ "white",
-        G_accumulated == "1-2"                   ~ "yellow",
-        G_accumulated == "3-9"                   ~ "orange",
-        G_accumulated == "10-25"                 ~ "red",
-        G_accumulated == ">25"                  ~ "black",
+        #G_accumulated == "First week above 15"   ~ "yellow",
+        #G_accumulated == "0"                     ~ "white",
+        G_accumulated == "15-25"                   ~ "yellow",
+        G_accumulated == "26-50"                   ~ "orange",
+        G_accumulated == "51-80"                 ~ "red",
+        G_accumulated == ">80"                  ~ "black",
       )
     ) %>% 
     mutate(
@@ -77,7 +77,7 @@ CovidAccumulated <- function(CovidGeo, population2000 = population_by_statistica
   
   
   
-  #names(CovidGeo)[4:6] <- paste0(names(CovidGeo)[4:6], "_", Month, "_", Day)
+  names(CovidGeo)[4:6] <- paste0(names(CovidGeo)[4:6], "_Accu")
   
   CovidGeo 
   
