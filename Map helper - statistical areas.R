@@ -8,6 +8,12 @@ StatisticalAreas <- sf::read_sf(dsn = "C:/Users/owner/OneDrive/R projects/Israel
   sf::st_transform('+proj=longlat +datum=WGS84')
 StatisticalAreas <- StatisticalAreas %>% rename(town_code = SEMEL_YISH)
 
+Voting <- read_csv("Voting Clusters Left to Ultra Orthodox by statistical area.csv") %>% 
+  mutate(MyCluster = case_when(
+    MyCluster == "Tie" ~ "Roughly equal Likud & Blue white",
+    TRUE ~ MyCluster
+  ))
+
 # Temp1 <- StatisticalAreas %>% pull(town_code)
 # Temp2 <- StatisticalAreas %>% pull(STAT08)
 # Temp3 <- StatisticalAreas %>% pull(STAT08)
@@ -55,6 +61,13 @@ population_by_statistical_area_ <- left_join(
   population_by_statistical_area_,
   Streets_by_STAT08 %>% select(-town)
   )
+
+population_by_statistical_area_ <- left_join(
+  population_by_statistical_area_,
+  Voting
+) %>% 
+  mutate(MyCluster = ifelse(is.na(MyCluster), " - ", MyCluster)) %>% 
+  rename(VoteCluster = MyCluster)
 
 #population_by_statistical_area_ <- population_by_statistical_area_ %>% group_by(town_code) %>% mutate(STAT08 = ifelse(n_distinct(STAT08) == 1, 1, STAT08)) %>% ungroup
 

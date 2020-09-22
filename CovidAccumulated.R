@@ -62,7 +62,7 @@ CovidAccumulated <- function(CovidGeo, population2000 = population_by_statistica
         Under2000 ~ "",
         Special == "<15" ~ "",
         Special == "First week above 15" ~ "",
-        TRUE ~ paste0("Cases per 10,0000: ", round(Accu7Scaled, 1))),
+        TRUE ~ paste0("Cases per 10,000: ", round(Accu7Scaled, 1))),
       Accumulated_all = case_when(
         Under2000 ~ "Population Under 2000<br/>MHO does not report cases",
         Special == "<15" ~ "Healthy Area<br/><15 cases accumulated<br/>since March 2020",
@@ -71,8 +71,8 @@ CovidAccumulated <- function(CovidGeo, population2000 = population_by_statistica
       )) %>% 
     mutate(
       Label7 = sprintf(
-        "Accumulated cases since March: <strong>%s</strong><br/>%s<br/><br/>Town: %s Statistical area: %g<br/>Population: %s<br/>Neighborhoods: %s<br/>Streets: %s<br/>",
-        Accumulated_all, AccuScaleLabel, town, STAT08, comma(parse_number(Population), accuracy = 1), Neighborhoods, Streets
+        "Accumulated cases since March: <strong>%s</strong><br/>%s<br/><br/>Town: %s Statistical area: %g<br/>Population: %s<br/>Neighborhoods: %s<br/>Streets: %s<br/><br/>Voting Characteristics: %s<br/>",
+        Accumulated_all, AccuScaleLabel, town, STAT08, comma(parse_number(Population), accuracy = 1), Neighborhoods, Streets, VoteCluster
       ),
       GName = "Accumulated Cases"
     ) %>% 
