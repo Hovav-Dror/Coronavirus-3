@@ -9,7 +9,7 @@ source("CovidAccumulated.R")
 
 # Choose how many weeks ---------------------------------------------------
 
-Weeks <- 4
+Weeks <- 5
 
 
 # Load latest COVID data by area number -----------------------------------
