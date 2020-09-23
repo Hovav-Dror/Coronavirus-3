@@ -1,4 +1,4 @@
-Covid7days_N_weeks <- function(CovidGeo, n = 0, population2000 = population_by_statistical_area_, StatisticalAreas = StatisticalAreas ) {
+Covid7days_N_weeks <- function(CovidGeo, n = 0, population2000 = population_by_statistical_area_, StatisticalAreas = StatisticalAreas, Skip = 1 ) {
   # a function that calculate for each statistical area how many cases in the last 7 days ending n weeks ago
 
 
@@ -6,7 +6,7 @@ Covid7days_N_weeks <- function(CovidGeo, n = 0, population2000 = population_by_s
     select(town, town_code, STAT08, date, accumulated_cases) %>% 
     arrange(desc(date))
   
-    LastDate <- CovidGeo %>% filter(!is.na(date)) %>% slice(1) %>% pull(date) - (n * 7)
+    LastDate <- CovidGeo %>% filter(!is.na(date)) %>% slice(1) %>% pull(date) - (Skip * n * 7)
     Month <- lubridate::month(LastDate, label = T, locale = "USA") %>% as.character()
     Day <- lubridate::day(LastDate) %>% as.character()
     LDay <- stringr::str_sub(Day,-1,-1) # last digit of the day

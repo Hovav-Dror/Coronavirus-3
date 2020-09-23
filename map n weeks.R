@@ -9,7 +9,8 @@ source("CovidAccumulated.R")
 
 # Choose how many weeks ---------------------------------------------------
 
-Weeks <- 5
+Weeks <- 3
+Skip <- 2
 
 
 # Load latest COVID data by area number -----------------------------------
@@ -19,14 +20,21 @@ Weeks <- 5
 #   new_hospitalizied_on_date, accumulated_deaths, new_deaths_on_date
 
 
-LatestFile <- "geographic-summary-per-day-2020-09-16.xlsx"
+#LatestFile <- "geographic-summary-per-day-2020-09-16.xlsx"
+LatestFile <- "geographic-summary-per-day-2020-09-20.csv"
+Ftype <- substr(LatestFile, nchar(LatestFile), nchar(LatestFile))
 
 { # load data file 
+  
+  if (Ftype == "x") { # if xlsx
   geographic_summary_per_day <- read_excel(LatestFile, 
                                          col_types = c("text", "text", "text", 
                                                        "text", "text", "text", "text", "text", 
                                                        "text", "text", "text", "text", "text", 
                                                        "text"))
+  } else { # if csv
+    geographic_summary_per_day <- read_csv(LatestFile, guess_max = 20000)
+  }
 
 geographic_summary_per_day <- geographic_summary_per_day %>% mutate(date = anytime::anydate(date)) # convert date from charachter to date
 geographic_summary_per_day <- geographic_summary_per_day %>% mutate(town_code = as.numeric(town_code), agas_code = as.numeric(agas_code)) # easier comparisons between files
@@ -46,13 +54,13 @@ if (!exists("StatisticalAreas") | !exists("population_by_statistical_area_")) {
 
 # Combine Weeks CovidGeos to a single tibble ------------------------------
 {
-CovidGeo <- Covid7days_N_weeks(CovidGeo = geographic_summary_per_day, n = 0, population2000 = population_by_statistical_area_)
+CovidGeo <- Covid7days_N_weeks(CovidGeo = geographic_summary_per_day, n = 0, population2000 = population_by_statistical_area_, Skip = Skip)
 
 if (Weeks > 1) {
   for (i in 1:(Weeks-1)) {
     CovidGeo = left_join(
       CovidGeo,
-      Covid7days_N_weeks(CovidGeo = geographic_summary_per_day, n = i, population2000 = population_by_statistical_area_)
+      Covid7days_N_weeks(CovidGeo = geographic_summary_per_day, n = i, population2000 = population_by_statistical_area_, Skip = Skip)
     )
   }
 }
@@ -110,3 +118,4 @@ Map <- Map %>%
 
 Map  
 }
+
